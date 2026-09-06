@@ -28,9 +28,7 @@ export default function Page() {
   const [showCreate, setShowCreate] = React.useState(false)
   const [newAgent, setNewAgent] = React.useState({ name: "", model: "GPT-4o", prompt: "" })
   const [chatInput, setChatInput] = React.useState("")
-  const [messages, setMessages] = React.useState<{ role: "user" | "assistant"; text: string }[]>([
-    { role: "assistant", text: "Hi! I'm your MyWhatsappMsg AI Agent. How can I help you today?" },
-  ])
+  const [messages, setMessages] = React.useState<{ role: "user" | "assistant"; text: string }[]>([])
 
   React.useEffect(() => {
     if (localStorage.getItem("auth") !== "true") router.replace("/login")
@@ -119,7 +117,7 @@ export default function Page() {
               <CardHeader><CardTitle className="flex items-center gap-2"><BotIcon className="size-4" /> Playground</CardTitle><p className="text-sm text-muted-foreground">Test your AI Agent â€” chat here, deploy to WhatsApp via Automation â†’ Chatbot.</p></CardHeader>
               <CardContent className="grid gap-4">
                 <div className="h-64 overflow-auto rounded-lg border bg-muted/20 p-3 space-y-2">
-                  {messages.map((m, i) => (
+                  {messages.length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No messages yet — start a conversation to test the agent.</p> : messages.map((m, i) => (
                     <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${m.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border"}`}>{m.text}</div>
                     </div>

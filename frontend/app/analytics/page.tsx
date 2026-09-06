@@ -21,10 +21,22 @@ const sample: Row[] = []
 export default function Page() {
   const router = useRouter()
   const [checked, setChecked] = React.useState(false)
+  const [stats, setStats] = React.useState<{ total: number; delivered: number; read: number } | null>(null)
   React.useEffect(() => {
     if (localStorage.getItem("auth") !== "true") router.replace("/login")
     else setChecked(true)
   }, [router])
+  React.useEffect(() => {
+    if (!checked) return
+    import("@/lib/api").then(({ getCampaignStats, getCampaigns }) =>
+      Promise.all([getCampaignStats().catch(()=>null), getCampaigns().catch(()=>null)]).then(([s, c]) => {
+        const total = s?.data?.total ?? c?.data?.length ?? 0
+        const delivered = c?.data?.reduce((a:number, x:any)=>a+(x.delivered||0),0) ?? 0
+        const read = c?.data?.reduce((a:number, x:any)=>a+(x.read||0),0) ?? 0
+        setStats({ total, delivered, read })
+      })
+    )
+  }, [checked])
   if (!checked) return <div className="flex min-h-svh items-center justify-center"><p className="text-sm text-muted-foreground">Checking authentication...</p></div>
   return (
     <SidebarProvider>
@@ -44,9 +56,9 @@ export default function Page() {
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div className="grid gap-4 md:grid-cols-3">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Campaigns</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">42</div><p className="text-xs text-muted-foreground">All time</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Delivery Rate</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">96.8%</div><p className="text-xs text-muted-foreground">Last 30 days</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Read Rate</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">73.5%</div><p className="text-xs text-muted-foreground">Last 30 days</p></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Campaigns</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{stats ? stats.total : "—"}</div><p className="text-xs text-muted-foreground">All time (real data)</p></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Delivered</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{stats ? stats.delivered : "—"}</div><p className="text-xs text-muted-foreground">Sum across campaigns</p></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Read</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{stats ? stats.read : "—"}</div><p className="text-xs text-muted-foreground">Sum across campaigns</p></CardContent></Card>
           </div>
 
           <AppTable

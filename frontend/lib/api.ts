@@ -1,4 +1,4 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+export const API_URL = typeof window !== "undefined" ? "" : process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
 
 export async function getHealth() {
   const res = await fetch(`${API_URL}/api/health`, { cache: "no-store" });
@@ -85,6 +85,38 @@ export async function getWhatsappStatus() {
   if (!res.ok) throw new Error("Failed to fetch status");
   return res.json();
 }
+export async function getWhatsappAccounts() {
+  const res = await fetch(`${API_URL}/api/whatsapp/accounts`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch accounts");
+  return res.json();
+}
+export async function createWhatsappAccount(data: { name: string; number: string; status?: string }) {
+  const res = await fetch(`${API_URL}/api/whatsapp/accounts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to create");
+  return json;
+}
+export async function updateWhatsappAccount(id: string, data: any) {
+  const res = await fetch(`${API_URL}/api/whatsapp/accounts/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to update");
+  return json;
+}
+export async function deleteWhatsappAccount(id: string) {
+  const res = await fetch(`${API_URL}/api/whatsapp/accounts/${id}`, { method: "DELETE" });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to delete");
+  return json;
+}
+
 export async function sendWhatsappMessage(to: string, message: string) {
   const res = await fetch(`${API_URL}/api/whatsapp/send`, {
     method: "POST",

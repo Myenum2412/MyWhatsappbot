@@ -3,21 +3,25 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 
 function tryStartDockerCompose() {
-  // Try to auto-start docker compose if docker is available (from project root)
-  try {
-    const root = path.resolve(process.cwd(), "..");
-    // prefer D:\mywhatsappmsg\docker-compose.yml
-    execSync("docker compose up -d --wait", { stdio: "ignore", cwd: root, timeout: 15000 });
-    console.log("🐳 Docker compose started (mongo + mongo-express)");
-    return true;
-  } catch {
+  const candidates = [
+    process.cwd(),
+    path.resolve(process.cwd(), ".."),
+    "/root/mywhatsappmsg",
+    path.resolve(process.cwd(), "../.."),
+  ];
+  for (const root of candidates) {
     try {
-      execSync("docker compose up -d", { stdio: "ignore", cwd: path.resolve(process.cwd(), ".."), timeout: 15000 });
+      execSync("docker compose up -d --wait", { stdio: "ignore", cwd: root, timeout: 15000 });
+      console.log("🐳 Docker compose started (mongo + mongo-express)");
       return true;
-    } catch {
-      return false;
-    }
+    } catch {}
+    try {
+      execSync("docker compose up -d", { stdio: "ignore", cwd: root, timeout: 15000 });
+      console.log("🐳 Docker compose started (mongo + mongo-express)");
+      return true;
+    } catch {}
   }
+  return false;
 }
 
 export async function connectDB(uri: string) {

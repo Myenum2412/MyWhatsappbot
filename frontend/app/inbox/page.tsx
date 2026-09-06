@@ -20,21 +20,13 @@ import { sendWhatsappMessage } from "@/lib/api"
 
 type Row = { id: string; name: string; email: string; status: string; created: string }
 
-const sample: Row[] = [
-  { id: "1", name: "Aman - Order #1234", email: "+91 98765 43210 • Hi, need help", status: "Active", created: "2024-11-10" },
-  { id: "2", name: "Priya Sharma", email: "+91 98765 43211 • Thanks!", status: "Invited", created: "2024-11-08" },
-  { id: "3", name: "Rahul Verma", email: "+91 98765 43212 • Document", status: "Inactive", created: "2024-11-05" },
-]
+const sample: Row[] = []
 
 export default function Page() {
   const router = useRouter()
   const [checked, setChecked] = React.useState(false)
   const [chatInput, setChatInput] = React.useState("")
-  const [messages, setMessages] = React.useState<{ variant: "incoming" | "outgoing"; text: string; timestamp: string; status?: any }[]>([
-    { variant: "incoming", text: "Hi, I need help with my order #1234", timestamp: "10:30", status: "read" },
-    { variant: "outgoing", text: "Hi there! Sure, I can help with order #1234. What seems to be the issue?", timestamp: "10:31", status: "read" },
-    { variant: "incoming", text: "It hasn't arrived yet", timestamp: "10:32", status: "read" },
-  ])
+  const [messages, setMessages] = React.useState<{ variant: "incoming" | "outgoing"; text: string; timestamp: string; status?: any }[]>([])
   React.useEffect(() => {
     if (localStorage.getItem("auth") !== "true") router.replace("/login")
     else setChecked(true)
@@ -47,7 +39,6 @@ export default function Page() {
     try {
       await sendWhatsappMessage("+91 98765 43210", text)
       setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, status: "delivered" } : m))
-      setTimeout(() => setMessages(prev => [...prev, { variant: "incoming", text: "Thanks! Got it ✅ (wwebjs.dev mock)", timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), status: "read" }]), 1000)
     } catch {}
   }
   if (!checked) return <div className="flex min-h-svh items-center justify-center"><p className="text-sm text-muted-foreground">Checking authentication...</p></div>
@@ -95,7 +86,9 @@ export default function Page() {
             </CardHeader>
             <CardContent className="p-0">
               <div className="wa-wallpaper p-4 space-y-0 min-h-[280px] flex flex-col">
-                {messages.map((m, i) => (
+                {messages.length === 0 ? (
+                  <p className="m-auto text-sm text-muted-foreground">No messages yet — send a message via WhatsApp to see real conversations here.</p>
+                ) : messages.map((m, i) => (
                   <ChatBubble key={i} variant={m.variant} timestamp={m.timestamp} status={m.status as any} showTail={i === messages.length - 1 || messages[i + 1]?.variant !== m.variant}>
                     {m.text}
                   </ChatBubble>

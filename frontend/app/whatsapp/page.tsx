@@ -9,41 +9,40 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 import { AppTable, SortIcon } from "@/components/blocks/app-table"
-import { QrCode, PlusIcon, SmartphoneIcon, RefreshCwIcon, ShieldAlertIcon, AlertTriangleIcon } from "lucide-react"
+import { QrCode, SmartphoneIcon, RefreshCwIcon, ShieldAlertIcon, AlertTriangleIcon } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Ellipsis } from "lucide-react"
-import { ChatBubble } from "@/components/ui/whatsapp/chat-bubble"
-import { getWhatsappQR, refreshWhatsappQR, getWhatsappStatus } from "@/lib/api"
+import { getWhatsappQR, refreshWhatsappQR, getWhatsappStatus, getWhatsappAccounts, createWhatsappAccount, updateWhatsappAccount, deleteWhatsappAccount, API_URL } from "@/lib/api"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import Link from "next/link"
 
 type WhatsappRow = { id: string; sno: number; name: string; number: string; status: "Connected" | "Disconnected" }
 
-const initialData: WhatsappRow[] = []
-
 export default function Page() {
   const router = useRouter()
   const [checked, setChecked] = React.useState(false)
-  const [rows, setRows] = React.useState<WhatsappRow[]>(initialData)
-  const [showForm, setShowForm] = React.useState(false)
+  const [rows, setRows] = React.useState<WhatsappRow[]>([])
+  const [open, setOpen] = React.useState(false)
   const [name, setName] = React.useState("")
   const [number, setNumber] = React.useState("")
   const [qrKey, setQrKey] = React.useState(0)
   const [qrData, setQrData] = React.useState<string | null>(null)
   const [waStatus, setWaStatus] = React.useState<string>("disconnected")
   const [waMode, setWaMode] = React.useState<string>("")
+  const [qrError, setQrError] = React.useState<string>("")
 
   async function fetchQR() {
     try {
+      setQrError("")
       const res = await getWhatsappQR()
+      if (!res.qr) setQrError(`No QR yet (status: ${res.status})`)
       setQrData(res.qr)
       setWaStatus(res.status)
       setWaMode(res.mode || "")
-    } catch {}
+    } catch (e: any) { setQrError(e.message || "Failed to fetch QR") }
   }
   async function fetchStatus() {
     try {
@@ -52,30 +51,45 @@ export default function Page() {
       setWaMode(res.mode || "")
     } catch {}
   }
+  async function fetchAccounts() {
+    try {
+      const data = await getWhatsappAccounts()
+      setRows(data.map((a: any, i: number) => ({ id: a._id, sno: i + 1, name: a.name, number: a.number, status: a.status })))
+    } catch {}
+  }
+
   React.useEffect(() => {
     if (localStorage.getItem("auth") !== "true") router.replace("/login")
     else {
       setChecked(true)
       fetchQR()
       fetchStatus()
+      fetchAccounts()
       const id = setInterval(fetchStatus, 3000)
       return () => clearInterval(id)
     }
   }, [router])
 
-  function handleCreate() {
-    if (!name.trim() || !number.trim()) return
-    const newRow: WhatsappRow = {
-      id: Date.now().toString(),
-      sno: rows.length + 1,
-      name: name.trim(),
-      number: number.trim(),
-      status: "Connected",
-    }
-    setRows(prev => [...prev, newRow])
+  // fetch fresh QR each time dialog opens
+  async function handleOpen() {
+    setOpen(true)
     setName("")
     setNumber("")
-    setShowForm(false)
+    const r = await refreshWhatsappQR().catch(() => null)
+    if (r?.qr) { setQrData(r.qr); setWaStatus(r.status) } else fetchQR()
+    setQrKey(k => k + 1)
+  }
+
+  async function handleConnect() {
+    if (!name.trim() || !number.trim()) return
+    const isConnected = waStatus === "connected"
+    try {
+      await createWhatsappAccount({ name: name.trim(), number: number.trim(), status: isConnected ? "Connected" : "Disconnected" })
+      await fetchAccounts()
+    } catch (e: any) { alert(e.message) }
+    setOpen(false)
+    setName("")
+    setNumber("")
   }
 
   if (!checked) return <div className="flex min-h-svh items-center justify-center"><p className="text-sm text-muted-foreground">Checking authentication...</p></div>
@@ -100,20 +114,20 @@ export default function Page() {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">WhatsApp Accounts</h1>
-            <p className="text-sm text-muted-foreground">S.no, Name, WhatsApp Number, Status — click Create to open form with Name + QR.</p>
+            <p className="text-sm text-muted-foreground">Connect WhatsApp numbers — each gets a fresh QR code and appears in the table automatically.</p>
           </div>
 
           {typeof window !== "undefined" && localStorage.getItem("terms_accepted") !== "true" && (
             <Alert variant="destructive" className="border-amber-200 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
               <ShieldAlertIcon className="size-4" />
               <AlertTitle>Terms not accepted — WhatsApp Business compliance required</AlertTitle>
-              <AlertDescription className="text-xs">You must accept <Link href="/terms" className="underline">Terms & Conditions</Link> (https://www.whatsapp.com/legal/business-terms/ • https://developers.facebook.com/docs/whatsapp/cloud-api/) before connecting numbers. <Link href="/terms" className="underline font-medium">Accept now</Link></AlertDescription>
+              <AlertDescription className="text-xs">You must accept <Link href="/terms" className="underline">Terms & Conditions</Link> before connecting numbers. <Link href="/terms" className="underline font-medium">Accept now</Link></AlertDescription>
             </Alert>
           )}
           <Alert className="border-blue-200 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100">
             <AlertTriangleIcon className="size-4" />
             <AlertTitle>Compliance Alert — WhatsApp Business Terms</AlertTitle>
-            <AlertDescription className="text-xs">Only connect numbers you own, ensure opt-in for contacts, use Cloud API template approval. Violations may lead to ban per <a href="https://www.whatsapp.com/legal/business-terms/?utm_source=chatgpt.com" target="_blank" className="underline">Business Terms</a>. QR via <span className="font-mono">wwebjs.dev</span> + chat bubbles via <span className="font-mono">chat-bubble.json</span></AlertDescription>
+            <AlertDescription className="text-xs">Only connect numbers you own, ensure opt-in for contacts, use approved templates. <a href="https://www.whatsapp.com/legal/business-terms/?utm_source=chatgpt.com" target="_blank" className="underline">Business Terms</a>. QR via <span className="font-mono">wwebjs.dev</span></AlertDescription>
           </Alert>
 
           <AppTable
@@ -123,8 +137,8 @@ export default function Page() {
             icon={<SmartphoneIcon className="size-4" />}
             searchKey="name"
             searchPlaceholder="Search by name or number..."
-            createLabel="Create Number"
-            onCreate={() => setShowForm(true)}
+            createLabel="Connect WhatsApp"
+            onCreate={handleOpen}
             columns={[
               { accessorKey: "sno", header: () => <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">S.no</span>, cell: ({ row }: any) => <span className="text-sm tabular-nums">{row.original.sno}</span> },
               { accessorKey: "name", header: ({ column }: any) => <button type="button" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")} className="-mx-1 inline-flex items-center gap-1 rounded-md px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase hover:text-foreground">Name <SortIcon sorted={column.getIsSorted()} /></button>, cell: ({ row }: any) => <span className="font-medium text-sm">{row.original.name}</span> },
@@ -141,14 +155,14 @@ export default function Page() {
                 header: () => <span className="sr-only">Actions</span>,
                 cell: ({ row }: any) => (
                   <div className="flex justify-end">
-                    <DropdownMenu>
+                      <DropdownMenu>
                       <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}><Ellipsis className="size-4" /></DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-36">
-                        <DropdownMenuItem onClick={() => setRows(prev => prev.map(r => r.id === row.original.id ? { ...r, status: r.status === "Connected" ? "Disconnected" : "Connected" } as WhatsappRow : r))}>
+                        <DropdownMenuItem onClick={async () => { const cur = row.original.status; await updateWhatsappAccount(row.original.id, { status: cur === "Connected" ? "Disconnected" : "Connected" }); fetchAccounts() }}>
                           {row.original.status === "Connected" ? "Disconnect" : "Connect"}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onClick={() => setRows(prev => prev.filter(r => r.id !== row.original.id).map((r, i) => ({ ...r, sno: i + 1 })))}>Delete</DropdownMenuItem>
+                        <DropdownMenuItem variant="destructive" onClick={async () => { await deleteWhatsappAccount(row.original.id); fetchAccounts() }}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -157,67 +171,49 @@ export default function Page() {
             ] as any}
           />
 
-          {showForm && (
-            <Card className="max-w-xl animate-in fade-in">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>New WhatsApp Account</span>
-                  <Button variant="ghost" size="sm" onClick={() => setShowForm(false)}>Close</Button>
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">This form appears when you click the Create button above. Enter Name and scan QR.</p>
-              </CardHeader>
-              <CardContent className="grid gap-6">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Connect WhatsApp</DialogTitle>
+                <DialogDescription>Enter name and number, then scan the QR code. A new QR is generated each time. Added automatically to the table.</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="MyWhatsappMsg Primary" value={name} onChange={e => setName(e.target.value)} />
+                  <Label htmlFor="wa-name">Name</Label>
+                  <Input id="wa-name" placeholder="MyWhatsappMsg Primary" value={name} onChange={e => setName(e.target.value)} />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="number">WhatsApp Number</Label>
-                  <Input id="number" placeholder="+91 98765 43210" value={number} onChange={e => setNumber(e.target.value)} />
+                  <Label htmlFor="wa-number">WhatsApp Number</Label>
+                  <Input id="wa-number" placeholder="+91 98765 43210" value={number} onChange={e => setNumber(e.target.value)} />
                 </div>
                 <div className="grid gap-2">
-                  <Label>QR Code — wwebjs.dev {waMode && <span className="text-xs text-muted-foreground">({waMode})</span>}</Label>
+                  <Label>QR Code {waMode && <span className="text-xs text-muted-foreground">({waMode})</span>}</Label>
                   <div className="flex items-center gap-2">
                     <Badge variant={waStatus === "connected" ? "default" : waStatus === "qr" ? "secondary" : "outline"} className={waStatus === "connected" ? "bg-green-100 text-green-700 border-green-200" : waStatus === "qr" ? "bg-amber-100 text-amber-700 border-amber-200" : ""}>{waStatus}</Badge>
-                    <span className="text-xs text-muted-foreground">via https://wwebjs.dev {waStatus === "connected" ? "• Auto-connected (mock)" : ""}</span>
+                    <span className="text-xs text-muted-foreground">via wwebjs.dev</span>
                   </div>
-                  <div key={qrKey} className="flex flex-col items-center gap-4 rounded-xl border bg-muted/20 p-6">
+                  <div key={qrKey} className="flex flex-col items-center gap-3 rounded-xl border bg-muted/20 p-4">
                     {qrData ? (
                       <img src={qrData} alt="WhatsApp QR" className="size-56 rounded-xl border bg-white p-2" />
                     ) : (
                       <div className="size-56 rounded-xl border-2 border-dashed bg-white flex flex-col items-center justify-center gap-2">
                         <QrCode className="size-12 text-muted-foreground" />
-                        <p className="text-sm font-medium">QR Code</p>
-                        <p className="text-xs text-muted-foreground text-center px-4">Scan to connect {name ? `“${name}”` : ""} {number ? `(${number})` : ""}</p>
+                        <p className="text-xs text-muted-foreground text-center px-4">{qrError || "Loading QR..."}</p>
                       </div>
                     )}
-                    <p className="text-xs text-muted-foreground text-center">Open WhatsApp → Settings → Linked Devices → Link a Device → Scan QR</p>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={async () => { const r = await refreshWhatsappQR(); setQrData(r.qr); setWaStatus(r.status); setQrKey(k => k + 1) }}><RefreshCwIcon className="size-4" /> Refresh QR (wwebjs)</Button>
-                      <Button variant="outline" size="sm" onClick={fetchQR}>Check Status</Button>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">Backend: GET /api/whatsapp/qr • POST /api/whatsapp/qr/refresh • wwebjs.dev mock QR generated via qrcode</p>
-                  </div>
-                  {/* Chat bubble preview using https://ui.meta-cloud-api.site/r/chat-bubble.json */}
-                  <div className="rounded-xl border bg-wa-bg p-3 wa-wallpaper">
-                    <p className="text-xs font-medium mb-2">Chat Bubble Preview (chat-bubble.json)</p>
-                    <div className="space-y-1">
-                      <ChatBubble variant="incoming" timestamp="10:30" showTail sender="Aman" isGroupChat={false}>Hi {name || "there"}, welcome to MyWhatsappMsg!</ChatBubble>
-                      <ChatBubble variant="outgoing" timestamp="10:31" status="read" showTail>Thanks! QR for {number || "+91 98xxxxxx10"} looks good ✓</ChatBubble>
-                      <ChatBubble variant="incoming" timestamp="10:32" showTail>Great! Your status is {waStatus}.</ChatBubble>
-                    </div>
+                    <p className="text-xs text-muted-foreground text-center">WhatsApp → Settings → Linked Devices → Link a Device → Scan QR</p>
+                    <Button variant="outline" size="sm" onClick={async () => { const r = await refreshWhatsappQR(); setQrData(r.qr); setWaStatus(r.status); setQrKey(k => k + 1) }}><RefreshCwIcon className="size-4" /> Refresh QR</Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button className="flex-1" disabled={!name.trim() || !number.trim()} onClick={handleCreate}><PlusIcon className="size-4" /> Connect</Button>
-                  <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button disabled={!name.trim() || !number.trim()} onClick={handleConnect}>Connect</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </SidebarInset>
     </SidebarProvider>
   )
 }
-
