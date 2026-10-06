@@ -1,44 +1,45 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import dotenv from "dotenv";
-import path from "path";
-import { connectDB } from "./plugins/db.js";
-import { userRoutes } from "./routes/user.routes.js";
-import { campaignRoutes } from "./routes/campaign.routes.js";
-import { whatsappRoutes } from "./routes/whatsapp.routes.js";
+import { healthRoutes } from "./routes/health.js";
+import { messageRoutes } from "./routes/messages.js";
+import { authRoutes } from "./routes/auth.js";
+import { runAuthMigrations } from "./db/auth-schema.js";
+import { pool } from "./db/pool.js";
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), "backend/.env") });
 dotenv.config();
 
 const app = Fastify({ logger: true });
-const PORT = Number(process.env.PORT) || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/myapp";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
-await app.register(cors, {
-  origin: [FRONTEND_URL, "http://localhost:3000"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-});
+const port = Number(process.env.PORT ?? 4000);
+const host = process.env.HOST ?? "0.0.0.0";
 
-await app.register(userRoutes);
-await app.register(campaignRoutes);
-await app.register(whatsappRoutes);
-
-// root route
-app.get("/", async () => {
-  return { message: "Fastify API 🚀", docs: "/api/health" };
-});
-
-const start = async () => {
+async function main() {
   try {
-    await app.listen({ port: PORT, host: "0.0.0.0" });
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-    connectDB(MONGODB_URI).catch(e => console.error("DB connect failed:", e.message));
+    await app.register(cors, {
+      origin: (process.env.CORS_ORIGIN ?? "http://localhost:3000").split(","),
+    });
+
+    await app.register(healthRoutes);
+    await app.register(messageRoutes);
+    await app.register(authRoutes);
+
+    // Ensure messages table exists (simple auto-migrate for dev)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        recipient TEXT NOT NULL,
+        body TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'queued',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+    await runAuthMigrations();
+    await app.listen({ port, host });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
   }
-};
+}
 
-start();
+void main();

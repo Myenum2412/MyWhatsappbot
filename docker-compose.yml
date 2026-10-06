@@ -1,27 +1,37 @@
 services:
-  mongo:
-    image: mongo:7
-    container_name: myapp-mongo
+  db:
+    image: postgres:18
     restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mywhatsappmsg
     ports:
-      - "27017:27017"
+      - "5432:5432"
     volumes:
-      - mongo_data:/data/db
-    environment:
-      MONGO_INITDB_DATABASE: myapp
+      - pgdata:/var/lib/postgresql/data
 
-  # Optional: Mongo Express for GUI at http://localhost:8081
-  mongo-express:
-    image: mongo-express:1.0.2
-    container_name: myapp-mongo-express
+  backend:
+    build: ./backend
     restart: unless-stopped
-    ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/
-      ME_CONFIG_BASICAUTH: false
     depends_on:
-      - mongo
+      - db
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/mywhatsappmsg
+      CORS_ORIGIN: http://localhost:3000
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
 
 volumes:
-  mongo_data:
+  pgdata:
