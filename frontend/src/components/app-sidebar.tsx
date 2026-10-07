@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/sidebar"
 import {
   LayoutDashboardIcon,
-  MessageSquareIcon,
   StoreIcon,
   UserIcon,
   UsersIcon,
@@ -50,12 +49,6 @@ export function AppSidebar({
             items: [{ title: "All users", url: "/orgmenu/users" }],
           },
           {
-            title: "Messages",
-            url: "/messages",
-            icon: <MessageSquareIcon />,
-            items: [{ title: "All messages", url: "/messages" }],
-          },
-          {
             title: "Profile",
             url: "/profile",
             icon: <UserIcon />,
@@ -75,12 +68,6 @@ export function AppSidebar({
             url: "/business",
             icon: <StoreIcon />,
             items: [{ title: "My business", url: "/business" }],
-          },
-          {
-            title: "Messages",
-            url: "/messages",
-            icon: <MessageSquareIcon />,
-            items: [{ title: "All messages", url: "/messages" }],
           },
           {
             title: "Profile",

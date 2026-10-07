@@ -25,12 +25,6 @@ function initialsOf(name: string) {
 
 type IconProps = { className?: string; size?: number | string }
 
-const stats = [
-  { label: "Posts", value: "128" },
-  { label: "Followers", value: "12.4k" },
-  { label: "Following", value: "312" },
-]
-
 const posts = [
   {
     title: "Designing tokens that scale",
@@ -84,8 +78,8 @@ export default function ProfileBlock({ user }: { user?: ProfileUser }) {
   ]
 
   return (
-    <section className="flex min-h-svh w-full justify-center bg-muted/30 px-6 py-16 text-foreground">
-      <div className="mx-auto w-full max-w-2xl rounded-xl border border-border bg-background">
+    <section className="flex h-full min-h-full w-full flex-1 flex-col bg-muted/30 text-foreground">
+      <div className="flex w-full max-w-none flex-1 flex-col rounded-xl border border-border bg-background">
         <div
           className="h-32 w-full rounded-t-xl bg-linear-to-br from-foreground/15 via-muted to-muted-foreground/10"
           aria-hidden="true"
@@ -127,15 +121,6 @@ export default function ProfileBlock({ user }: { user?: ProfileUser }) {
             Staff product designer. Writing about design systems, tokens, and
             the craft of shipping calm software.
           </p>
-
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            {stats.map((stat) => (
-              <span key={stat.label} className="flex items-baseline gap-1.5">
-                <span className="font-semibold tabular-nums">{stat.value}</span>
-                <span className="text-muted-foreground">{stat.label}</span>
-              </span>
-            ))}
-          </div>
 
           <Tabs defaultValue="posts" className="mt-6 gap-4">
             <TabsList className="w-full">

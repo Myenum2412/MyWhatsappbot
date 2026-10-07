@@ -151,7 +151,7 @@ const columns: ColumnDef<typeof TABLE_FEATURES, DirectoryUser>[] = [
       <button
         type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="-mx-1 inline-flex items-center gap-1 rounded-md px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
+        className="-mx-1 inline-flex items-center gap-1 rounded-none px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
       >
         User
         <SortIcon sorted={column.getIsSorted()} />
@@ -191,7 +191,7 @@ const columns: ColumnDef<typeof TABLE_FEATURES, DirectoryUser>[] = [
       <button
         type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="-mx-1 inline-flex items-center gap-1 rounded-md px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
+        className="-mx-1 inline-flex items-center gap-1 rounded-none px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
       >
         Role
         <SortIcon sorted={column.getIsSorted()} />
@@ -210,7 +210,7 @@ const columns: ColumnDef<typeof TABLE_FEATURES, DirectoryUser>[] = [
       <button
         type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="-mx-1 ml-auto inline-flex items-center gap-1 rounded-md px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
+        className="-mx-1 ml-auto inline-flex items-center gap-1 rounded-none px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
       >
         Joined
         <SortIcon sorted={column.getIsSorted()} />
@@ -327,11 +327,11 @@ export default function TableBlock({
   }
 
   return (
-    <section className="flex w-full justify-center bg-background text-foreground">
-      <div className="w-full max-w-4xl">
+    <section className="flex h-full min-h-full w-full flex-1 flex-col bg-background text-foreground">
+      <div className="flex w-full max-w-none flex-1 flex-col">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md border border-border bg-card text-muted-foreground">
+            <div className="flex size-9 items-center justify-center rounded-none border border-border bg-card text-muted-foreground">
               <Users className="size-4" aria-hidden="true" />
             </div>
             <div>
@@ -406,7 +406,7 @@ export default function TableBlock({
         </div>
 
         {selectedCount > 0 && (
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 px-4 py-2.5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-none border border-border bg-muted/40 px-4 py-2.5">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground tabular-nums">
                 {selectedCount} Selected
@@ -427,7 +427,7 @@ export default function TableBlock({
           </div>
         )}
 
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex w-full flex-1 flex-col overflow-hidden rounded-none border border-border bg-card">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
