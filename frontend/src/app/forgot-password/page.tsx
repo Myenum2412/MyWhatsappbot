@@ -1,11 +1,13 @@
 import { ForgotPasswordForm } from "@/components/forgot-password-form"
+import { AuthShell } from "@/components/auth-shell"
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <ForgotPasswordForm />
-      </div>
-    </div>
+    <AuthShell
+      title="Locked out? Let's get you back in."
+      subtitle="Reset links expire in one hour and are single-use for your security."
+    >
+      <ForgotPasswordForm />
+    </AuthShell>
   )
 }

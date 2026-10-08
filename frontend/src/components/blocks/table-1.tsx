@@ -82,6 +82,24 @@ function initialsOf(name: string) {
 const roleVariant: Record<DirectoryUser["role"], "default" | "secondary"> = {
   orgmenu: "default",
   businessowners: "secondary",
+};
+
+function RoleBadge({ role }: { role: DirectoryUser["role"] }) {
+  if (role === "orgmenu") {
+    return (
+      <Badge className="rounded-full border-amber-500/25 bg-amber-500/10 text-[11.5px] text-amber-700 hover:bg-amber-500/15 dark:text-amber-300">
+        Org Menu
+      </Badge>
+    );
+  }
+  return (
+    <Badge
+      variant="secondary"
+      className="rounded-full border-emerald-500/20 bg-emerald-500/10 text-[11.5px] text-emerald-700 dark:text-emerald-300"
+    >
+      Business
+    </Badge>
+  );
 }
 
 const roleLabel: Record<DirectoryUser["role"], string> = {
@@ -198,9 +216,7 @@ const columns: ColumnDef<typeof TABLE_FEATURES, DirectoryUser>[] = [
       </button>
     ),
     cell: ({ row }) => (
-      <Badge variant={roleVariant[row.original.role]} className="text-xs">
-        {roleLabel[row.original.role]}
-      </Badge>
+      <RoleBadge role={row.original.role} />
     ),
   },
   {
@@ -327,27 +343,28 @@ export default function TableBlock({
   }
 
   return (
-    <section className="flex h-full min-h-full w-full flex-1 flex-col bg-background text-foreground">
+    <section className="flex h-full min-h-full w-full flex-1 flex-col text-foreground">
       <div className="flex w-full max-w-none flex-1 flex-col">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-none border border-border bg-card text-muted-foreground">
-              <Users className="size-4" aria-hidden="true" />
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 items-center justify-center rounded-2xl border border-border bg-card text-muted-foreground shadow-sm">
+              <Users className="size-5" aria-hidden="true" />
             </div>
             <div>
-              <h1 className="text-lg leading-tight font-semibold tracking-tight">
+              <p className="eyebrow">Directory · Admin</p>
+              <h1 className="mt-0.5 text-[18px] leading-tight font-semibold tracking-[-0.02em]">
                 Users
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="mt-0.5 text-[13px] text-muted-foreground">
                 {loading
                   ? "Loading users..."
                   : `${users.length} registered users across all roles`}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 type="search"
                 value={nameFilter}
@@ -355,7 +372,7 @@ export default function TableBlock({
                   table.getColumn("name")?.setFilterValue(event.target.value)
                 }
                 placeholder="Search users..."
-                className="h-7 w-48 pl-8 text-sm"
+                className="h-9 w-52 rounded-xl bg-card pr-3 pl-9 text-[13px]"
                 aria-label="Search users by name or email"
               />
             </div>
@@ -366,6 +383,7 @@ export default function TableBlock({
                     variant="outline"
                     size="sm"
                     aria-label="Toggle columns"
+                    className="h-9 rounded-xl"
                   >
                     <Columns className="size-3.5" aria-hidden="true" />
                     View
@@ -394,11 +412,11 @@ export default function TableBlock({
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading} className="h-9 rounded-xl">
               <RefreshCw className="size-3.5" aria-hidden="true" />
               Refresh
             </Button>
-            <Button size="sm" onClick={handleExport} disabled={users.length === 0}>
+            <Button size="sm" onClick={handleExport} disabled={users.length === 0} className="h-9 rounded-xl">
               <Download className="size-3.5" aria-hidden="true" />
               Export
             </Button>
@@ -406,40 +424,40 @@ export default function TableBlock({
         </div>
 
         {selectedCount > 0 && (
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-none border border-border bg-muted/40 px-4 py-2.5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground tabular-nums">
+              <span className="text-[13.5px] font-medium text-foreground tabular-nums">
                 {selectedCount} Selected
               </span>
               <Button
                 variant="ghost"
                 size="xs"
-                className="text-muted-foreground hover:text-foreground"
+                className="rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => table.resetRowSelection()}
               >
                 Clear
               </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={handleExport}>
+            <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-lg bg-card">
               <Download className="size-3.5" aria-hidden="true" />
               Export selected
             </Button>
           </div>
         )}
 
-        <div className="flex w-full flex-1 flex-col overflow-hidden rounded-none border border-border bg-card">
+        <div className="surface-card flex w-full flex-1 flex-col overflow-hidden">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="border-b border-border bg-muted/40 hover:bg-muted/40"
+                  className="border-b border-border/70 bg-muted/40 hover:bg-muted/40"
                 >
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
                       className={cn(
-                        "h-9",
+                        "h-10",
                         header.column.id === "select" && "w-10 pl-4",
                         header.column.id === "name" && "pl-1",
                         header.column.id === "created_at" && "text-right",
@@ -464,7 +482,10 @@ export default function TableBlock({
                     colSpan={columns.length}
                     className="h-24 text-center text-sm text-muted-foreground"
                   >
-                    Loading users...
+                    <span className="inline-flex items-center gap-2">
+                      <RefreshCw className="size-4 animate-spin" />
+                      Loading users...
+                    </span>
                   </TableCell>
                 </TableRow>
               ) : error ? (
@@ -481,7 +502,7 @@ export default function TableBlock({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() ? "selected" : undefined}
-                    className="border-b border-border transition-colors duration-100 last:border-b-0 hover:bg-muted/30"
+                    className="border-b border-border/60 transition-colors duration-150 last:border-b-0 hover:bg-muted/40 data-[state=selected]:bg-emerald-500/[0.05]"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
@@ -514,30 +535,30 @@ export default function TableBlock({
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-between gap-4 border-t border-border bg-muted/20 px-4 py-2.5">
-            <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{totalCount}</span>{" "}
+          <div className="flex items-center justify-between gap-4 border-t border-border/70 bg-muted/30 px-4 py-2.5">
+            <p className="text-[12.5px] text-muted-foreground">
+              <span className="font-semibold text-foreground tabular-nums">{totalCount}</span>{" "}
               {totalCount === 1 ? "Result" : "Results"}
             </p>
             <div className="flex items-center gap-1.5">
               <Button
                 variant="outline"
                 size="icon"
-                className="size-7"
+                className="size-7 rounded-lg bg-card"
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
                 aria-label="Previous page"
               >
                 <ChevronLeft className="size-3.5" aria-hidden="true" />
               </Button>
-              <span className="px-1 text-xs text-muted-foreground tabular-nums">
+              <span className="px-1 font-mono text-[12px] text-muted-foreground tabular-nums">
                 Page {table.state.pagination.pageIndex + 1} of{" "}
                 {Math.max(pageCount, 1)}
               </span>
               <Button
                 variant="outline"
                 size="icon"
-                className="size-7"
+                className="size-7 rounded-lg bg-card"
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
                 aria-label="Next page"

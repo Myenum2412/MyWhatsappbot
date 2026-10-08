@@ -12,9 +12,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { GalleryVerticalEndIcon } from "lucide-react"
+import { CircleAlertIcon, Loader2Icon, CheckCircle2Icon } from "lucide-react"
 import Link from "next/link"
 import { resetPassword } from "@/lib/auth"
+import { AuthShell } from "@/components/auth-shell"
 
 function ResetPasswordForm({
   className,
@@ -50,34 +51,39 @@ function ResetPasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form onSubmit={onSubmit}>
         <FieldGroup>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex flex-col items-center gap-2 font-medium">
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <GalleryVerticalEndIcon className="size-6" />
-              </div>
-              <span className="sr-only">mywhatsappmsg</span>
-            </div>
-            <h1 className="text-xl font-bold">Set a new password</h1>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[22px] font-semibold tracking-[-0.02em]">
+              Set a new password
+            </h1>
+            <FieldDescription className="text-[13.5px]">
+              Choose a strong password with at least 8 characters.
+            </FieldDescription>
           </div>
           {!token ? (
-            <div className="rounded-lg border p-4 text-sm">
-              <p>
+            <div className="rounded-2xl border border-border bg-card p-5 text-sm">
+              <p className="leading-relaxed text-muted-foreground">
                 This reset link is missing its token. Request a new one from
                 the{" "}
-                <Link className="underline" href="/forgot-password">
+                <Link className="font-medium text-foreground underline underline-offset-4" href="/forgot-password">
                   forgot password
                 </Link>{" "}
                 page.
               </p>
             </div>
           ) : done ? (
-            <div className="rounded-lg border p-4 text-sm">
-              <p className="font-medium">Password updated</p>
-              <p className="mt-1 text-zinc-500">
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5 text-sm">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                <CheckCircle2Icon className="size-5" />
+              </span>
+              <p className="mt-3 font-semibold">Password updated</p>
+              <p className="mt-1 text-[13px] text-muted-foreground">
                 You can now sign in with your new password.
               </p>
-              <p className="mt-3">
-                <Link className="underline" href="/login">
+              <p className="mt-4">
+                <Link
+                  className="inline-flex items-center rounded-xl bg-foreground px-3.5 py-2 text-[13px] font-medium text-background transition-opacity hover:opacity-90"
+                  href="/login"
+                >
                   Go to login
                 </Link>
               </p>
@@ -96,6 +102,8 @@ function ResetPasswordForm({
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
+                  autoComplete="new-password"
+                  className="h-10 rounded-xl bg-card focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20"
                 />
               </Field>
               <Field>
@@ -108,11 +116,26 @@ function ResetPasswordForm({
                   onChange={(e) => setConfirm(e.target.value)}
                   required
                   minLength={8}
+                  autoComplete="new-password"
+                  className="h-10 rounded-xl bg-card focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20"
                 />
               </Field>
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && (
+                <p
+                  role="alert"
+                  className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/[0.06] px-3 py-2.5 text-[13px] text-red-700 dark:text-red-300"
+                >
+                  <CircleAlertIcon className="mt-0.5 size-4 shrink-0" />
+                  {error}
+                </p>
+              )}
               <Field>
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="h-10 w-full rounded-xl bg-foreground text-background hover:opacity-90"
+                >
+                  {loading && <Loader2Icon className="animate-spin" />}
                   {loading ? "Updating..." : "Update password"}
                 </Button>
               </Field>
@@ -120,8 +143,10 @@ function ResetPasswordForm({
           )}
         </FieldGroup>
       </form>
-      <FieldDescription className="px-6 text-center">
-        <Link href="/login">Back to login</Link>
+      <FieldDescription className="text-center text-[13px]">
+        <Link href="/login" className="underline underline-offset-4">
+          Back to login
+        </Link>
       </FieldDescription>
     </div>
   )
@@ -129,12 +154,13 @@ function ResetPasswordForm({
 
 export default function ResetPasswordPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <Suspense fallback={<p className="text-sm">Loading...</p>}>
-          <ResetPasswordForm />
-        </Suspense>
-      </div>
-    </div>
+    <AuthShell
+      title="Choose a fresh, secure password."
+      subtitle="Your new password takes effect immediately on all sessions."
+    >
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading...</p>}>
+        <ResetPasswordForm />
+      </Suspense>
+    </AuthShell>
   )
 }

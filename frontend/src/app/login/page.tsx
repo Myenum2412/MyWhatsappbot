@@ -1,11 +1,13 @@
 import { LoginForm } from "@/components/login-form"
+import { AuthShell } from "@/components/auth-shell"
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <LoginForm />
-      </div>
-    </div>
+    <AuthShell
+      title="Ship WhatsApp messaging your customers actually read."
+      subtitle="One workspace for numbers, templates, campaigns and automation — with delivery you can trust."
+    >
+      <LoginForm />
+    </AuthShell>
   )
 }

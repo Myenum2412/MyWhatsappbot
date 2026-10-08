@@ -11,7 +11,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { GalleryVerticalEndIcon } from "lucide-react"
+import { CircleAlertIcon, Loader2Icon, MailCheckIcon } from "lucide-react"
 import Link from "next/link"
 import { forgotPassword } from "@/lib/auth"
 
@@ -44,35 +44,37 @@ export function ForgotPasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form onSubmit={onSubmit}>
         <FieldGroup>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <div className="flex flex-col items-center gap-2 font-medium">
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <GalleryVerticalEndIcon className="size-6" />
-              </div>
-              <span className="sr-only">mywhatsappmsg</span>
-            </div>
-            <h1 className="text-xl font-bold">Reset your password</h1>
-            <FieldDescription>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[22px] font-semibold tracking-[-0.02em]">
+              Reset your password
+            </h1>
+            <FieldDescription className="text-[13.5px]">
               Enter your account email and we&apos;ll send you a reset link.
             </FieldDescription>
           </div>
           {sent ? (
-            <div className="rounded-lg border p-4 text-sm">
-              <p className="font-medium">Check your inbox</p>
-              <p className="mt-1 text-zinc-500">
+            <div className="rounded-2xl border border-border bg-card p-5 text-sm">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                <MailCheckIcon className="size-5" />
+              </span>
+              <p className="mt-3 font-semibold">Check your inbox</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
                 If an account exists for {email}, a reset link was sent. It
                 expires in 1 hour.
               </p>
               {devUrl && (
-                <p className="mt-2 break-all">
+                <p className="mt-2 text-[13px] break-all">
                   Dev reset link:{" "}
-                  <Link className="underline" href={devUrl}>
+                  <Link className="underline underline-offset-4" href={devUrl}>
                     {devUrl}
                   </Link>
                 </p>
               )}
-              <p className="mt-3">
-                <Link className="underline" href="/login">
+              <p className="mt-4">
+                <Link
+                  className="inline-flex items-center rounded-xl border border-border px-3 py-2 text-[13px] font-medium transition-colors hover:bg-muted"
+                  href="/login"
+                >
                   Back to login
                 </Link>
               </p>
@@ -88,16 +90,37 @@ export function ForgotPasswordForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="email"
+                  className="h-10 rounded-xl bg-card transition-all duration-150 focus-visible:border-emerald-500/50 focus-visible:ring-emerald-500/20"
                 />
               </Field>
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && (
+                <p
+                  role="alert"
+                  className="flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/[0.06] px-3 py-2.5 text-[13px] text-red-700 dark:text-red-300"
+                >
+                  <CircleAlertIcon className="mt-0.5 size-4 shrink-0" />
+                  {error}
+                </p>
+              )}
               <Field>
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="h-10 w-full rounded-xl bg-foreground text-background shadow-sm transition-all duration-150 hover:opacity-90 active:translate-y-px"
+                >
+                  {loading && <Loader2Icon className="animate-spin" />}
                   {loading ? "Sending..." : "Send reset link"}
                 </Button>
               </Field>
-              <FieldDescription className="text-center">
-                Remembered it? <Link href="/login">Sign in</Link>
+              <FieldDescription className="text-center text-[13px]">
+                Remembered it?{" "}
+                <Link
+                  href="/login"
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Sign in
+                </Link>
               </FieldDescription>
             </>
           )}
